@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespace }}
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.name }}-tls
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ .Values.tls.crt }}
+  tls.key: {{ .Values.tls.key }}
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+    spec:
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 1234
+      containers:
+      - name: server
+        image: {{ .Values.image }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8443
+          name: webhook-api
+        volumeMounts:
+        - name: webhook-tls-certs
+          mountPath: /run/secrets/tls
+          readOnly: true
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecret }}
+      volumes:
+      - name: webhook-tls-certs
+        secret:
+          secretName: {{ .Values.name }}-tls
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: {{ .Values.name }}
+  ports:
+    - port: 443
+      targetPort: webhook-api
+
+---
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ .Values.name }}-configuration
+webhooks:
+  - name: {{ .Values.name }}.{{ .Values.namespace }}.svc
+    clientConfig:
+      service:
+        name: {{ .Values.name }}
+        namespace: {{ .Values.namespace }}
+        path: {{ .Values.path }}
+      caBundle: {{ .Values.ca_pem_b64 }}
+    rules:
+      - operations:
+        {{- range .Values.operations }}
+          - {{ . }}
+        {{- end }}
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources:
+        {{- range .Values.resources }}
+          - {{ . }}
+        {{- end }}

@@ -1,0 +1,22 @@
+# Default values for admission-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+name: admission-webhook-server
+namespace: admission-webhooks
+image: admission-controller-webapi:latest
+path: /mutate
+ca_pem_b64: TODO!
+imagePullSecret: regcred
+
+tls:
+  crt: blah
+  key: ha
+
+operations:
+- "CREATE"
+- "UPDATE"
+- "DELETE"
+
+resources:
+- "pods"
