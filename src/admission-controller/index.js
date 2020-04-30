@@ -15,7 +15,7 @@ var bodyParser = require('body-parser')
 app.use(bodyParser.json())
 
 app.post('/mutate', (req,res) => {
-    console.log(JSON.stringify(req.body));
+    console.log(JSON.stringify(req.body, null, '\t'));
     res.json({ uid: req.body.request.uid, allowed: true });
 });
 
@@ -26,4 +26,6 @@ app.post('/mutate', (req,res) => {
 
 app.listen(8000);
 
-https.createServer(options, app).listen(8443);
+https.createServer(options, app).listen(8443, () => {
+  console.log("Admission controller ready");
+});

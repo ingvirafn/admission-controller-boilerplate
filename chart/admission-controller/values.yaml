@@ -6,12 +6,12 @@ name: admission-webhook-server
 namespace: admission-webhooks
 image: admission-controller-webapi:latest
 path: /mutate
-ca_pem_b64: TODO!
+ca_pem_b64: inserted-at-deploy-time
 imagePullSecret: regcred
 
 tls:
-  crt: blah
-  key: ha
+  crt: inserted-at-deploy-time
+  key: inserted-at-deploy-time
 
 operations:
 - "CREATE"
@@ -20,3 +20,5 @@ operations:
 
 resources:
 - "pods"
+- "ingress"
+
